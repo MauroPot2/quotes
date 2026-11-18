@@ -83,6 +83,58 @@ di 50 risultati (si richiedono 51 risultati per sapere se esiste una pagina succ
 categorie e sottocategorie personalizzabili richiederanno un modello dati
 dedicato e una migrazione SQLite in un incremento successivo.
 
+## Anagrafica clienti e backup (database v2)
+
+Nuova sezione **Clienti**: aggiungi, modifica, elimina e cerca clienti
+per nome, email o telefono. Ogni scheda contiene nome/ragione sociale,
+contatti, indirizzo, P.IVA/C.F. e note interne.
+
+Nell'editor di un preventivo usa **Dall'anagrafica** per selezionare un
+cliente esistente oppure crearne uno. Il preventivo memorizza il riferimento
+al cliente, ma **mantiene anche una copia** di nome e recapiti alla data
+del preventivo: modifiche o cancellazioni successive del cliente non
+alterano i documenti già salvati. I vecchi preventivi senza cliente collegato
+rimangono utilizzabili.
+
+Il database SQLite passa da schema **v1 a v2** tramite una migrazione
+non distruttiva: viene creata la tabella `customers` e aggiunto
+`quotes.customer_id` opzionale. Non cancellare il database per aggiornare.
+
+### Backup locale manuale
+
+Nella sezione **Backup** puoi:
+
+- **Esporta backup:** ottieni un file JSON versionato che include
+  clienti, attività, catalogo SQLite, preventivi e relative voci.
+  Il foglio di condivisione del sistema consente di salvarlo in File,
+  iCloud Drive, Google Drive o altra destinazione disponibile.
+- **Ripristina backup:** scegli un file JSON compatibile, controlla il
+  riepilogo, conferma la sostituzione dei dati sul dispositivo.
+  Il ripristino è atomico in una transazione SQLite: in caso di errore
+  non viene applicata una sostituzione parziale.
+
+Non vengono esportati i dati generati **solo in memoria** dal catalogo
+fake (`USE_FAKE_CATALOG=true`); i preventivi restano sempre nel DB locale.
+Il PDF si rigenera dai dati del preventivo, non è incluso come allegato.
+
+**Sicurezza:** il backup JSON non è cifrato: contiene dati personali.
+Conservalo su uno spazio privato/protetto e **mai in GitHub**.
+Il backup è manuale, non automatico; dopo la condivisione verifica
+che il file sia stato effettivamente salvato fuori dal dispositivo.
+Il ripristino **sostituisce** tutti i dati locali: non è un merge.
+
+Per il nuovo plugin nativo di selezione file:
+
+```bash
+flutter pub get
+flutter analyze
+flutter test
+```
+
+Su macOS sandboxed `file_selector` richiede l'entitlement
+`com.apple.security.files.user-selected.read-only` per il ripristino.
+La compatibilità va verificata sui target reali prima del rilascio.
+
 ## Architettura
 
 ```text
