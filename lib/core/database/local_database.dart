@@ -21,13 +21,15 @@ class LocalDatabase {
     return _factory.openDatabase(
       location,
       options: OpenDatabaseOptions(
-        version: 1,
+        version: 2,
         onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
         onCreate: (db, version) async {
+          await _createCustomers(db);
           await db.execute('''
             CREATE TABLE quotes (
               id TEXT PRIMARY KEY,
               number TEXT NOT NULL UNIQUE,
+              customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL,
               customer_name TEXT NOT NULL,
               customer_email TEXT NOT NULL,
               customer_phone TEXT NOT NULL,
@@ -77,9 +79,38 @@ class LocalDatabase {
               'ON quote_lines(quote_id, position)');
           await db.execute('CREATE INDEX idx_quotes_updated_at '
               'ON quotes(updated_at DESC)');
+          await db.execute('CREATE INDEX idx_quotes_customer_id '
+              'ON quotes(customer_id)');
+        },
+        onUpgrade: (db, oldVersion, newVersion) async {
+          if (oldVersion < 2) {
+            await _createCustomers(db);
+            await db.execute('ALTER TABLE quotes ADD COLUMN '
+                'customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL');
+            await db.execute('CREATE INDEX idx_quotes_customer_id '
+                'ON quotes(customer_id)');
+          }
         },
       ),
     );
+  }
+
+  static Future<void> _createCustomers(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE customers (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        address TEXT NOT NULL,
+        vat_number TEXT NOT NULL,
+        notes TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute('CREATE INDEX idx_customers_name '
+        'ON customers(name COLLATE NOCASE)');
   }
 
   Future<void> close() async {
