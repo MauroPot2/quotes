@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 /// Esportazione/ripristino indipendenti dalla UI e dai plugin di condivisione.
 abstract interface class BackupRepository {
-  Future<Uint8List> export();
+  Future<Uint8List> exportBackup();
   BackupPreview inspect(Uint8List bytes);
   Future<void> restore(Uint8List bytes);
 }
