@@ -6,7 +6,6 @@ import 'package:preventivo/features/quotes/data/sqlite_quote_repository.dart';
 import 'package:preventivo/features/quotes/domain/models/quote.dart';
 import 'package:preventivo/features/quotes/domain/models/quote_line.dart';
 import 'package:preventivo/features/quotes/domain/use_cases/save_quote.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
