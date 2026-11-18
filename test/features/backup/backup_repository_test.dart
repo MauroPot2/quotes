@@ -78,7 +78,7 @@ void main() {
 
   test('esportazione e ripristino di clienti, preventivi e catalogo', () async {
     await populate();
-    final bytes = await backup.export();
+    final bytes = await backup.exportBackup();
     final preview = backup.inspect(bytes);
     expect(preview.customers, 1);
     expect(preview.quotes, 1);
@@ -113,7 +113,7 @@ void main() {
 
   test('errore di riferimento durante ripristino annulla tutta la transazione', () async {
     await populate();
-    final initial = await backup.export();
+    final initial = await backup.exportBackup();
     final decoded = jsonDecode(utf8.decode(initial)) as Map<String, dynamic>;
     final tables = decoded['tables'] as Map<String, dynamic>;
     final quoteRows = tables['quotes'] as List<dynamic>;
