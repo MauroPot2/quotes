@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/formatting/amounts.dart';
@@ -6,11 +5,11 @@ import '../../catalog/domain/catalog_entry.dart';
 import '../../catalog/presentation/catalog_search_results.dart';
 import '../domain/models/quote_line.dart';
 
-class CatalogPicker extends ConsumerWidget {
+class CatalogPicker extends StatelessWidget {
   const CatalogPicker({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => SafeArea(
+  Widget build(BuildContext context) => SafeArea(
     child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Column(
