@@ -21,9 +21,7 @@ class CatalogPage extends ConsumerWidget {
       await ref.read(catalogProvider.notifier).save(result);
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$error')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
     }
   }
 
@@ -34,14 +32,8 @@ class CatalogPage extends ConsumerWidget {
         title: const Text('Eliminare la voce?'),
         content: const Text('I preventivi esistenti non saranno modificati.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annulla'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Elimina'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annulla')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Elimina')),
         ],
       ),
     );
@@ -50,9 +42,7 @@ class CatalogPage extends ConsumerWidget {
       await ref.read(catalogProvider.notifier).delete(entry.id);
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$error')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
     }
   }
 
@@ -66,13 +56,9 @@ class CatalogPage extends ConsumerWidget {
           itemBuilder: (context, entry) => Card(
             child: ListTile(
               title: Text(entry.description),
-              subtitle: Text(
-                '${entry.kind.label} · ${entry.unit} · IVA ${entry.vatRate}%',
-              ),
+              subtitle: Text('${entry.kind.label} · ${entry.unit} · IVA ${entry.vatRate}%'),
               leading: Icon(
-                entry.kind == LineKind.labor
-                    ? Icons.handyman_outlined
-                    : Icons.settings_outlined,
+                entry.kind == LineKind.labor ? Icons.handyman_outlined : Icons.settings_outlined,
               ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -102,3 +88,4 @@ class CatalogPage extends ConsumerWidget {
       label: const Text('Aggiungi voce'),
     ),
   );
+}

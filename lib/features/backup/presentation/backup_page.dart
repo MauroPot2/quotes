@@ -1,5 +1,3 @@
-import 'package:cross_file/cross_file.dart';
-import 'package:flutter/widgets.dart';
 import 'package:file_selector/file_selector.dart' as selector;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -21,9 +19,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
   void _showError(Object error) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Operazione non riuscita: $error')),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('Operazione non riuscita: $error')));
   }
 
   Future<void> _exportBackup() async {
@@ -87,9 +84,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       ref.invalidate(catalogSearchProvider);
       ref.invalidate(businessProvider);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ripristino completato.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Ripristino completato.')));
     } catch (error) {
       _showError(error);
     } finally {
@@ -152,7 +148,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 trailing: _busy
                     ? const CircularProgressIndicator()
                     : const Icon(Icons.chevron_right),
-                onTap: _busy ? null : _export,
+                onTap: _busy ? null : _exportBackup,
               ),
             ),
             Card(
