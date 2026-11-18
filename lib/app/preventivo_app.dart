@@ -20,7 +20,6 @@ class PreventivoApp extends StatelessWidget {
         contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 14),
       ),
     ),
-    builder: (context, child) => MaterialUiCompatibilityBridge(child: child!),
     home: const AppShell(),
   );
 }
