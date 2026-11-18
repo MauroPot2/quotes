@@ -6,6 +6,7 @@ import '../core/database/local_database.dart';
 import '../features/business/data/sqlite_business_repository.dart';
 import '../features/business/domain/business_profile.dart';
 import '../features/business/domain/business_repository.dart';
+import '../features/catalog/data/fake_catalog_repository.dart';
 import '../features/catalog/data/sqlite_catalog_repository.dart';
 import '../features/catalog/domain/catalog_entry.dart';
 import '../features/catalog/domain/catalog_repository.dart';
@@ -23,8 +24,14 @@ final localDatabaseProvider = Provider<LocalDatabase>((ref) {
 final quoteRepositoryProvider = Provider<QuoteRepository>(
   (ref) => SqliteQuoteRepository(ref.watch(localDatabaseProvider)),
 );
+// Il catalogo demo si attiva solo con --dart-define=USE_FAKE_CATALOG=true.
+// Di default resta il repository SQLite, senza dati di prova.
+const useFakeCatalog = bool.fromEnvironment('USE_FAKE_CATALOG');
+
 final catalogRepositoryProvider = Provider<CatalogRepository>(
-  (ref) => SqliteCatalogRepository(ref.watch(localDatabaseProvider)),
+  (ref) => useFakeCatalog
+      ? FakeCatalogRepository()
+      : SqliteCatalogRepository(ref.watch(localDatabaseProvider)),
 );
 final businessRepositoryProvider = Provider<BusinessRepository>(
   (ref) => SqliteBusinessRepository(ref.watch(localDatabaseProvider)),

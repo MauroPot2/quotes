@@ -35,6 +35,33 @@ Lo script genera **solo** le cartelle `android/`, `ios/`, `macos/`, senza sovras
 - SQLite locale, schema v1 e chiavi esterne attive; nessun account e nessuna connessione obbligatoria.
 - Navigazione adattiva: barra inferiore su mobile, rail su schermi ampi.
 
+## Catalogo demo (10.000 voci)
+
+Per verificare prestazioni e usabilita del catalogo con molti dati, puoi
+avviare un **fake repository in memoria** senza caricare articoli in SQLite:
+
+```bash
+flutter run --dart-define=USE_FAKE_CATALOG=true
+```
+
+- **8.000 ricambi/materiali** e **2.000 voci di manodopera**, con ID, descrizioni
+  e prezzi deterministici in centesimi.
+- Il catalogo viene generato solo quando richiesto e mantenuto in memoria
+  per la sessione; non utilizza SQLite, Firestore o altri servizi.
+- Aggiunte, modifiche e cancellazioni nel catalogo fake sono temporanee:
+  si perdono al riavvio. Il catalogo reale SQLite resta intatto.
+- I **preventivi** continuano a essere salvati nel database SQLite,
+  anche quando una voce proviene dal catalogo fake.
+- Senza il flag, l'app usa il catalogo SQLite normale:
+
+```bash
+flutter run
+```
+
+Il repository e implementato in
+`lib/features/catalog/data/fake_catalog_repository.dart` e attivato in
+`lib/app/providers.dart`, senza cambiare i contratti di dominio o i ViewModel.
+
 ## Architettura
 
 ```text
