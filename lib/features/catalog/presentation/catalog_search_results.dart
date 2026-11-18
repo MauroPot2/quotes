@@ -6,7 +6,6 @@ import 'package:material_ui/material_ui.dart';
 import '../../../app/providers.dart';
 import '../../quotes/domain/models/quote_line.dart';
 import '../domain/catalog_entry.dart';
-import '../domain/catalog_repository.dart';
 
 typedef CatalogEntryBuilder = Widget Function(
   BuildContext context,
