@@ -29,7 +29,7 @@ class _CustomerPickerState extends ConsumerState<CustomerPicker> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cliente non salvato: ${error}')),
+        SnackBar(content: Text('Cliente non salvato: $error')),
       );
     }
   }
@@ -57,7 +57,7 @@ class _CustomerPickerState extends ConsumerState<CustomerPicker> {
             Expanded(
               child: customers.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(child: Text('${error}')),
+                error: (error, stack) => Center(child: Text('$error')),
                 data: (items) {
                   final filtered = items.where((customer) =>
                     customer.name.toLowerCase().contains(_search) ||
