@@ -25,11 +25,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     );
   }
 
-  Future<void> _export() async {
+  Future<void> _exportBackup() async {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      final bytes = await ref.read(backupRepositoryProvider).export();
+      final bytes = await ref.read(backupRepositoryProvider).exportBackup();
       if (!mounted) return;
       final timestamp = DateFormat('yyyyMMdd-HHmm').format(DateTime.now());
       final filename = 'preventivo-backup-$timestamp.json';
