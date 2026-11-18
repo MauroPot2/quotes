@@ -65,7 +65,7 @@ class QuotesViewModel extends AsyncNotifier<List<Quote>> {
 /// Riverpod mantiene in cache una pagina per ogni combinazione di filtri.
 /// La lista completa non viene letta da SQLite per mostrare il catalogo.
 final catalogSearchProvider =
-    FutureProvider.family<List<CatalogEntry>, CatalogSearchQuery>((ref, filter) {
+    FutureProvider.autoDispose.family<List<CatalogEntry>, CatalogSearchQuery>((ref, filter) {
       return ref.watch(catalogRepositoryProvider).search(
         query: filter.text,
         kind: filter.kind,
