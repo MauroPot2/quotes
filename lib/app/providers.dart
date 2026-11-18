@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/database/local_database.dart';
+import '../features/backup/data/sqlite_backup_repository.dart';
+import '../features/backup/domain/backup_repository.dart';
 import '../features/business/data/sqlite_business_repository.dart';
 import '../features/business/domain/business_profile.dart';
 import '../features/business/domain/business_repository.dart';
@@ -10,6 +12,9 @@ import '../features/catalog/data/fake_catalog_repository.dart';
 import '../features/catalog/data/sqlite_catalog_repository.dart';
 import '../features/catalog/domain/catalog_entry.dart';
 import '../features/catalog/domain/catalog_repository.dart';
+import '../features/customers/data/sqlite_customer_repository.dart';
+import '../features/customers/domain/customer.dart';
+import '../features/customers/domain/customer_repository.dart';
 import '../features/quotes/data/sqlite_quote_repository.dart';
 import '../features/quotes/domain/models/quote.dart';
 import '../features/quotes/domain/repositories/quote_repository.dart';
@@ -33,6 +38,38 @@ final catalogRepositoryProvider = Provider<CatalogRepository>(
       ? FakeCatalogRepository()
       : SqliteCatalogRepository(ref.watch(localDatabaseProvider)),
 );
+final customerRepositoryProvider = Provider<CustomerRepository>(
+  (ref) => SqliteCustomerRepository(ref.watch(localDatabaseProvider)),
+);
+
+final backupRepositoryProvider = Provider<BackupRepository>(
+  (ref) => SqliteBackupRepository(ref.watch(localDatabaseProvider)),
+);
+
+final customersProvider =
+    AsyncNotifierProvider<CustomersViewModel, List<Customer>>(
+      CustomersViewModel.new,
+    );
+
+class CustomersViewModel extends AsyncNotifier<List<Customer>> {
+  @override
+  Future<List<Customer>> build() =>
+      ref.watch(customerRepositoryProvider).getAll();
+
+  Future<Customer> save(Customer customer) async {
+    final saved = await ref.read(customerRepositoryProvider).save(customer);
+    ref.invalidateSelf();
+    return saved;
+  }
+
+  Future<void> delete(String id) async {
+    await ref.read(customerRepositoryProvider).delete(id);
+    ref.invalidate(quotesProvider);
+    ref.invalidate(quoteProvider);
+    ref.invalidateSelf();
+  }
+}
+
 final businessRepositoryProvider = Provider<BusinessRepository>(
   (ref) => SqliteBusinessRepository(ref.watch(localDatabaseProvider)),
 );

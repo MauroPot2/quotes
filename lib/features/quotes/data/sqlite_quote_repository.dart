@@ -51,6 +51,7 @@ class SqliteQuoteRepository implements QuoteRepository {
       final saved = Quote(
         id: id,
         number: number,
+        customerId: quote.customerId,
         customerName: quote.customerName.trim(),
         customerEmail: quote.customerEmail.trim(),
         customerPhone: quote.customerPhone.trim(),
@@ -65,6 +66,7 @@ class SqliteQuoteRepository implements QuoteRepository {
       final row = <String, Object?>{
         'id': saved.id,
         'number': saved.number,
+        'customer_id': saved.customerId,
         'customer_name': saved.customerName,
         'customer_email': saved.customerEmail,
         'customer_phone': saved.customerPhone,
@@ -120,6 +122,7 @@ class SqliteQuoteRepository implements QuoteRepository {
     return Quote(
       id: row['id']! as String,
       number: row['number']! as String,
+      customerId: row['customer_id'] as String?,
       customerName: row['customer_name']! as String,
       customerEmail: row['customer_email']! as String,
       customerPhone: row['customer_phone']! as String,

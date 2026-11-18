@@ -4,6 +4,7 @@ class Quote {
   Quote({
     required this.id,
     required this.number,
+    this.customerId,
     required this.customerName,
     required this.customerEmail,
     required this.customerPhone,
@@ -18,6 +19,7 @@ class Quote {
 
   final String id; // Empty until first save.
   final String number; // Generated atomically by persistence on first save.
+  final String? customerId;
   final String customerName;
   final String customerEmail;
   final String customerPhone;

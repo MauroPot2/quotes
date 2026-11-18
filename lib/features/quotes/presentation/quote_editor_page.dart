@@ -5,6 +5,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../../app/providers.dart';
 import '../../../core/formatting/amounts.dart';
 import '../../catalog/domain/catalog_entry.dart';
+import '../../customers/domain/customer.dart';
+import '../../customers/presentation/customer_picker.dart';
 import '../../export/presentation/share_quote.dart';
 import '../domain/models/quote.dart';
 import '../domain/models/quote_line.dart';
@@ -48,6 +50,7 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
   late final TextEditingController _notes;
   late final TextEditingController _validity;
   late DateTime _issueDate;
+  String? _selectedCustomerId;
   bool _saving = false;
 
   @override
@@ -61,6 +64,7 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
     _notes = TextEditingController(text: old?.notes ?? '');
     _validity = TextEditingController(text: '${old?.validityDays ?? 30}');
     _issueDate = old?.issueDate ?? DateTime.now();
+    _selectedCustomerId = old?.customerId;
 
   }
 
@@ -73,6 +77,27 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
     _notes.dispose();
     _validity.dispose();
     super.dispose();
+  }
+
+  void _unlinkCustomer() {
+    if (_selectedCustomerId != null) {
+      setState(() => _selectedCustomerId = null);
+    }
+  }
+
+  Future<void> _pickCustomer() async {
+    final customer = await showDialog<Customer>(
+      context: context,
+      builder: (_) => const CustomerPicker(),
+    );
+    if (customer == null || !mounted) return;
+    setState(() {
+      _selectedCustomerId = customer.id;
+      _customerName.text = customer.name;
+      _customerEmail.text = customer.email;
+      _customerPhone.text = customer.phone;
+      _customerAddress.text = customer.address;
+    });
   }
 
   Future<void> _newLine({QuoteLine? existing, CatalogEntry? entry}) async {
@@ -101,6 +126,7 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
     return Quote(
       id: old?.id ?? '',
       number: old?.number ?? '',
+      customerId: _selectedCustomerId,
       customerName: _customerName.text,
       customerEmail: _customerEmail.text,
       customerPhone: _customerPhone.text,
@@ -166,9 +192,24 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
               children: [
-                _sectionTitle('Cliente'),
+                Row(
+                  children: [
+                    Expanded(child: _sectionTitle('Cliente')),
+                    OutlinedButton.icon(
+                      onPressed: _pickCustomer,
+                      icon: const Icon(Icons.person_search_outlined),
+                      label: const Text('Dall’anagrafica'),
+                    ),
+                  ],
+                ),
+                if (_selectedCustomerId != null)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 10),
+                    child: Text('Cliente collegato: i dati vengono copiati nel preventivo.'),
+                  ),
                 TextFormField(
                   controller: _customerName,
+                  onChanged: (_) => _unlinkCustomer(),
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(labelText: 'Nome / ragione sociale *'),
                   validator: (value) =>
@@ -177,18 +218,21 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _customerEmail,
+                  onChanged: (_) => _unlinkCustomer(),
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(labelText: 'Email'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _customerPhone,
+                  onChanged: (_) => _unlinkCustomer(),
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(labelText: 'Telefono'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _customerAddress,
+                  onChanged: (_) => _unlinkCustomer(),
                   decoration: const InputDecoration(labelText: 'Indirizzo'),
                 ),
                 const SizedBox(height: 22),
