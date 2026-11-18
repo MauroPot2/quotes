@@ -12,15 +12,34 @@ import 'catalog_picker.dart';
 import 'quote_line_dialog.dart';
 import 'quote_editor_view_model.dart';
 
-class QuoteEditorPage extends ConsumerStatefulWidget {
+/// Each editor route owns an isolated draft. Its initial lines are provided
+/// when Riverpod builds the notifier, never by mutating it in initState.
+class QuoteEditorPage extends StatelessWidget {
   const QuoteEditorPage({this.existing, super.key});
   final Quote? existing;
 
   @override
-  ConsumerState<QuoteEditorPage> createState() => _QuoteEditorPageState();
+  Widget build(BuildContext context) => ProviderScope(
+    overrides: [
+      quoteEditorProvider.overrideWithBuild(
+        (ref, notifier) => List<QuoteLine>.unmodifiable(
+          existing?.lines ?? const <QuoteLine>[],
+        ),
+      ),
+    ],
+    child: _QuoteEditorForm(existing: existing),
+  );
 }
 
-class _QuoteEditorPageState extends ConsumerState<QuoteEditorPage> {
+class _QuoteEditorForm extends ConsumerStatefulWidget {
+  const _QuoteEditorForm({required this.existing});
+  final Quote? existing;
+
+  @override
+  ConsumerState<_QuoteEditorForm> createState() => _QuoteEditorFormState();
+}
+
+class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _customerName;
   late final TextEditingController _customerEmail;
@@ -43,7 +62,6 @@ class _QuoteEditorPageState extends ConsumerState<QuoteEditorPage> {
     _validity = TextEditingController(text: '${old?.validityDays ?? 30}');
     _issueDate = old?.issueDate ?? DateTime.now();
 
-    ref.read(quoteEditorProvider.notifier).initialize(old?.lines ?? const []);
   }
 
   @override
