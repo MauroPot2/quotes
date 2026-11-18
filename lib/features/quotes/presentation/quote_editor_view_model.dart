@@ -12,10 +12,6 @@ class QuoteEditorViewModel extends Notifier<List<QuoteLine>> {
   @override
   List<QuoteLine> build() => const [];
 
-  void initialize(List<QuoteLine> lines) {
-    state = List<QuoteLine>.unmodifiable(lines);
-  }
-
   void upsert(QuoteLine line) {
     final next = [...state];
     final index = next.indexWhere((candidate) => candidate.id == line.id);
