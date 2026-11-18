@@ -62,6 +62,18 @@ class QuotesViewModel extends AsyncNotifier<List<Quote>> {
   }
 }
 
+/// Riverpod mantiene in cache una pagina per ogni combinazione di filtri.
+/// La lista completa non viene letta da SQLite per mostrare il catalogo.
+final catalogSearchProvider =
+    FutureProvider.family<List<CatalogEntry>, CatalogSearchQuery>((ref, filter) {
+      return ref.watch(catalogRepositoryProvider).search(
+        query: filter.text,
+        kind: filter.kind,
+        limit: filter.limit,
+        offset: filter.offset,
+      );
+    });
+
 final catalogProvider = AsyncNotifierProvider<CatalogViewModel, List<CatalogEntry>>(
   CatalogViewModel.new,
 );
@@ -72,11 +84,13 @@ class CatalogViewModel extends AsyncNotifier<List<CatalogEntry>> {
 
   Future<void> save(CatalogEntry entry) async {
     await ref.read(catalogRepositoryProvider).save(entry);
+    ref.invalidate(catalogSearchProvider);
     ref.invalidateSelf();
   }
 
   Future<void> delete(String id) async {
     await ref.read(catalogRepositoryProvider).delete(id);
+    ref.invalidate(catalogSearchProvider);
     ref.invalidateSelf();
   }
 }
