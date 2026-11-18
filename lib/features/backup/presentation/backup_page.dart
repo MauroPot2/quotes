@@ -1,4 +1,5 @@
 import 'package:cross_file/cross_file.dart';
+import 'package:flutter/widgets.dart';
 import 'package:file_selector/file_selector.dart' as selector;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -67,6 +68,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         ],
       );
       if (selected == null || !mounted) return;
+      if (await selected.length() > 40 * 1024 * 1024) {
+        throw const FormatException('File troppo grande (massimo 40 MB).');
+      }
       final bytes = await selected.readAsBytes();
       if (!mounted) return;
       final preview = ref.read(backupRepositoryProvider).inspect(bytes);
