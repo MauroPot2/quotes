@@ -1,0 +1,27 @@
+import 'dart:convert';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:preventivo/features/business/domain/business_profile.dart';
+import 'package:preventivo/features/export/application/quote_pdf_service.dart';
+import 'package:preventivo/features/quotes/domain/models/quote.dart';
+import 'package:preventivo/features/quotes/domain/models/quote_line.dart';
+
+void main() {
+  test('generates a non-empty PDF document', () async {
+    final now = DateTime(2026, 11, 18);
+    final quote = Quote(
+      id: '1', number: 'P-2026-0001', customerName: 'Cliente Test',
+      customerEmail: '', customerPhone: '', customerAddress: '', notes: '',
+      issueDate: now, validityDays: 30, createdAt: now, updatedAt: now,
+      lines: const [QuoteLine(
+        id: 'line', description: 'Riparazione', kind: LineKind.labor,
+        unit: 'h', quantityMilli: 1000, unitPriceCents: 5000, vatRate: 22,
+      )],
+    );
+    final bytes = await const QuotePdfService().generate(
+      quote, const BusinessProfile(name: 'Officina Demo'),
+    );
+    expect(bytes.length, greaterThan(500));
+    expect(ascii.decode(bytes.take(5).toList()), '%PDF-');
+  });
+}

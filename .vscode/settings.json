@@ -1,0 +1,6 @@
+{
+  "editor.formatOnSave": true,
+  "dart.lineLength": 100,
+  "dart.flutterSdkPath": null,
+  "dart.analysisExcludedFolders": ["build"]
+}
