@@ -65,6 +65,7 @@ class CustomersViewModel extends AsyncNotifier<List<Customer>> {
   Future<void> delete(String id) async {
     await ref.read(customerRepositoryProvider).delete(id);
     ref.invalidate(quotesProvider);
+    ref.invalidate(quoteProvider);
     ref.invalidateSelf();
   }
 }
