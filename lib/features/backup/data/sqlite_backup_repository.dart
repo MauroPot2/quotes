@@ -58,7 +58,7 @@ class SqliteBackupRepository implements BackupRepository {
   ];
 
   @override
-  Future<Uint8List> export() async {
+  Future<Uint8List> exportBackup() async {
     final db = await database.instance;
     final data = await db.transaction((txn) async {
       final rows = <String, List<Map<String, Object?>>>{};
