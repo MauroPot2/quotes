@@ -37,7 +37,7 @@ class SqliteCustomerRepository implements CustomerRepository {
       createdAt: customer.id.isEmpty ? now : customer.createdAt,
       updatedAt: now,
     );
-    await db.insert('customers', {
+    final row = <String, Object?>{
       'id': saved.id,
       'name': saved.name,
       'email': saved.email,
@@ -47,7 +47,20 @@ class SqliteCustomerRepository implements CustomerRepository {
       'notes': saved.notes,
       'created_at': saved.createdAt.toIso8601String(),
       'updated_at': saved.updatedAt.toIso8601String(),
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    };
+    if (customer.id.isEmpty) {
+      await db.insert('customers', row);
+    } else {
+      // INSERT OR REPLACE eliminerebbe la riga preesistente in SQLite e
+      // attiverebbe ON DELETE SET NULL sui preventivi collegati.
+      final count = await db.update(
+        'customers',
+        row,
+        where: 'id = ?',
+        whereArgs: [saved.id],
+      );
+      if (count != 1) throw StateError('Cliente non trovato.');
+    }
     return saved;
   }
 
