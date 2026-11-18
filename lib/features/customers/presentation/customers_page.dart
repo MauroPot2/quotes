@@ -26,7 +26,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cliente non salvato: ${error}')),
+        SnackBar(content: Text('Cliente non salvato: $error')),
       );
     }
   }
@@ -37,7 +37,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       builder: (context) => AlertDialog(
         title: const Text('Eliminare il cliente?'),
         content: Text(
-          'Eliminare ' + customer.name + '? I preventivi già salvati '
+          'Eliminare ${customer.name}? I preventivi già salvati '
           'conserveranno i dati del cliente.',
         ),
         actions: [
@@ -54,7 +54,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cliente non eliminato: ${error}')),
+        SnackBar(content: Text('Cliente non eliminato: $error')),
       );
     }
   }
@@ -83,7 +83,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
               Expanded(
                 child: customers.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (error, stack) => Center(child: Text('Errore clienti: ${error}')),
+                  error: (error, stack) => Center(child: Text('Errore clienti: $error')),
                   data: (items) {
                     final filtered = items.where((customer) {
                       return customer.name.toLowerCase().contains(_search) ||
