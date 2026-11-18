@@ -62,6 +62,27 @@ Il repository e implementato in
 `lib/features/catalog/data/fake_catalog_repository.dart` e attivato in
 `lib/app/providers.dart`, senza cambiare i contratti di dominio o i ViewModel.
 
+## Ricerca catalogo e prestazioni
+
+Il catalogo e il selettore **Dal catalogo** nella pagina preventivo condividono
+`CatalogSearchResults`: ricerca testuale per descrizione o codice/ID,
+filtro **Tutti / Articoli e ricambi / Manodopera**, debounce 300 ms e paginazione
+di 50 risultati (si richiedono 51 risultati per sapere se esiste una pagina successiva).
+
+- Il repository SQLite applica `WHERE`, `ORDER BY`, `LIMIT` e `OFFSET`
+  direttamente nel database; non carica tutte le voci.
+- Il fake repository filtra in memoria i 10.000 elementi generati e restituisce
+  solo i risultati della pagina richiesta, senza chiamate Firestore.
+- Il contratto `CatalogRepository.search` mantiene indipendente la UI
+  dalla sorgente dati.
+- Le modifiche al catalogo invalidano i risultati Riverpod in cache.
+- Le pagine hanno filtri autonomi; le vecchie voci dei preventivi non
+  vengono alterate.
+
+**Nota:** il filtro per tipo e la ricerca diretta sono disponibili;
+categorie e sottocategorie personalizzabili richiederanno un modello dati
+dedicato e una migrazione SQLite in un incremento successivo.
+
 ## Architettura
 
 ```text
