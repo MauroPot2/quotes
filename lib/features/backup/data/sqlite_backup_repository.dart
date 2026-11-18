@@ -108,7 +108,9 @@ class SqliteBackupRepository implements BackupRepository {
         for (final row in snapshot.tables[table]!) {
           batch.insert(table, row);
         }
-        await batch.commit(noResult: true);
+        if (snapshot.tables[table]!.isNotEmpty) {
+          await batch.commit(noResult: true);
+        }
       }
       final brokenRelations = await txn.rawQuery('PRAGMA foreign_key_check');
       if (brokenRelations.isNotEmpty) {
