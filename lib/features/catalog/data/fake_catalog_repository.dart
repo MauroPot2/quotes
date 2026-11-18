@@ -91,6 +91,27 @@ class FakeCatalogRepository implements CatalogRepository {
   }
 
   @override
+  Future<List<CatalogEntry>> search({
+    String query = '',
+    LineKind? kind,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    if (limit < 1 || limit > 100 || offset < 0) {
+      throw RangeError('Paginazione non valida: limit deve essere 1–100 e offset >= 0');
+    }
+    _ensureSeeded();
+    final text = query.trim().toLowerCase();
+    // Ordinamento deterministico uguale al repository SQLite.
+    final matches = (await getAll()).where((entry) =>
+        (kind == null || entry.kind == kind) &&
+        (text.isEmpty ||
+            entry.description.toLowerCase().contains(text) ||
+            entry.id.toLowerCase().contains(text)));
+    return List<CatalogEntry>.unmodifiable(matches.skip(offset).take(limit));
+  }
+
+  @override
   Future<void> save(CatalogEntry entry) async {
     if (entry.description.trim().isEmpty || entry.priceCents < 0) {
       throw const FormatException('Voce del catalogo non valida.');

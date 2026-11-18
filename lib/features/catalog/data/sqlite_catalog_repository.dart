@@ -9,21 +9,59 @@ class SqliteCatalogRepository implements CatalogRepository {
   const SqliteCatalogRepository(this.database);
   final LocalDatabase database;
 
+  CatalogEntry _fromRow(Map<String, Object?> row) => CatalogEntry(
+    id: row['id']! as String,
+    description: row['description']! as String,
+    kind: LineKind.values.byName(row['kind']! as String),
+    unit: row['unit']! as String,
+    priceCents: row['price_cents']! as int,
+    vatRate: row['vat_rate']! as int,
+  );
+
   @override
   Future<List<CatalogEntry>> getAll() async {
     final db = await database.instance;
-    final rows = await db.query('catalog_entries', orderBy: 'description COLLATE NOCASE');
-    return [
-      for (final row in rows)
-        CatalogEntry(
-          id: row['id']! as String,
-          description: row['description']! as String,
-          kind: LineKind.values.byName(row['kind']! as String),
-          unit: row['unit']! as String,
-          priceCents: row['price_cents']! as int,
-          vatRate: row['vat_rate']! as int,
-        ),
-    ];
+    final rows = await db.query('catalog_entries', orderBy: 'description COLLATE NOCASE, id');
+    return List<CatalogEntry>.unmodifiable(rows.map(_fromRow));
+  }
+
+  @override
+  Future<List<CatalogEntry>> search({
+    String query = '',
+    LineKind? kind,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    if (limit < 1 || limit > 100 || offset < 0) {
+      throw RangeError('Paginazione non valida: limit deve essere 1–100 e offset >= 0');
+    }
+    final db = await database.instance;
+    final terms = <String>[];
+    final arguments = <Object?>[];
+    if (kind != null) {
+      terms.add('kind = ?');
+      arguments.add(kind.name);
+    }
+    final text = query.trim();
+    if (text.isNotEmpty) {
+      // Evita che %, _ e backslash immessi nella ricerca diventino wildcard LIKE.
+      final escaped = text
+          .replaceAll(r'\', r'\\')
+          .replaceAll('%', r'\%')
+          .replaceAll('_', r'\_');
+      final pattern = '%$escaped%';
+      terms.add(r"(description LIKE ? ESCAPE '\' OR id LIKE ? ESCAPE '\')");
+      arguments.addAll([pattern, pattern]);
+    }
+    final rows = await db.query(
+      'catalog_entries',
+      where: terms.isEmpty ? null : terms.join(' AND '),
+      whereArgs: arguments.isEmpty ? null : arguments,
+      orderBy: 'description COLLATE NOCASE, id',
+      limit: limit,
+      offset: offset,
+    );
+    return List<CatalogEntry>.unmodifiable(rows.map(_fromRow));
   }
 
   @override
