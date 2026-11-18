@@ -80,6 +80,15 @@ void main() {
     ));
     expect(quote.customerId, customer.id);
 
+    // La modifica dell'anagrafica non deve scollegare i preventivi.
+    await customers.save(makeCustomer(
+      id: customer.id,
+      name: 'Mario Bianchi',
+    ));
+    final linked = await quotes.getById(quote.id);
+    expect(linked!.customerId, customer.id);
+    expect(linked.customerName, 'Mario Rossi');
+
     await customers.delete(customer.id);
     final preserved = await quotes.getById(quote.id);
     expect(preserved, isNotNull);
