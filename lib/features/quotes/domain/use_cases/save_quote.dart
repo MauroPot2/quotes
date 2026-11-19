@@ -16,6 +16,9 @@ class SaveQuote {
     if (quote.validityDays < 1 || quote.validityDays > 3650) {
       throw const FormatException('Validità non ammessa.');
     }
+    if (quote.discountBasisPoints < 0 || quote.discountBasisPoints > 10000) {
+      throw const FormatException('Sconto non ammesso.');
+    }
     for (final line in quote.lines) {
       if (line.description.trim().isEmpty ||
           line.quantityMilli <= 0 ||

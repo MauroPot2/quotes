@@ -18,6 +18,9 @@ flutter create --platforms=android,ios,macos --project-name preventivo --org com
 for platform in android ios macos; do
   if [[ ! -d "$platform" ]]; then
     cp -R "$TEMP_DIR/preventivo/$platform" "./$platform"
+  elif [[ "$platform" == android && ! -f android/app/src/main/AndroidManifest.xml ]]; then
+    echo 'Host Android incompleto: aggiungo i file mancanti senza sovrascrivere quelli esistenti.'
+    cp -Rn "$TEMP_DIR/preventivo/android/." ./android/
   else
     echo "Host $platform già presente: non lo sovrascrivo."
   fi

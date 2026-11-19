@@ -24,4 +24,21 @@ void main() {
     expect(bytes.length, greaterThan(500));
     expect(ascii.decode(bytes.take(5).toList()), '%PDF-');
   });
+
+  test('genera PDF con logo, firma, sconto e condizioni', () async {
+    const image = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+    final now = DateTime(2026, 11, 18);
+    final quote = Quote(
+      id: '1', number: 'P-2026-0001', customerName: 'Cliente',
+      customerEmail: '', customerPhone: '', customerAddress: '', notes: 'Nota',
+      conditions: 'Pagamento a 30 giorni', discountBasisPoints: 1250,
+      issueDate: now, validityDays: 30, createdAt: now, updatedAt: now,
+      lines: const [QuoteLine(id: '1', description: 'Lavoro', kind: LineKind.labor,
+        unit: 'h', quantityMilli: 1000, unitPriceCents: 10000, vatRate: 22)],
+    );
+    final bytes = await const QuotePdfService().generate(quote,
+      const BusinessProfile(name: 'Officina', logo: image, signature: image));
+    expect(ascii.decode(bytes.take(5).toList()), '%PDF-');
+    expect(bytes.length, greaterThan(1000));
+  });
 }

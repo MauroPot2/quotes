@@ -3,6 +3,20 @@ import 'package:preventivo/features/quotes/domain/models/quote.dart';
 import 'package:preventivo/features/quotes/domain/models/quote_line.dart';
 
 void main() {
+  test('sconto per aliquota prima dell’IVA, con arrotondamenti coerenti', () {
+    const lines = [
+      QuoteLine(id: 'a', description: 'A', kind: LineKind.part, unit: 'pz', quantityMilli: 1000, unitPriceCents: 10001, vatRate: 22),
+      QuoteLine(id: 'b', description: 'B', kind: LineKind.labor, unit: 'h', quantityMilli: 1000, unitPriceCents: 5001, vatRate: 10),
+    ];
+    final totals = QuoteTotals.fromLines(lines, discountBasisPoints: 1250);
+    expect(totals.subtotalCents, 15002);
+    expect(totals.discountCents, 1875);
+    expect(totals.taxableByRate, {22: 8751, 10: 4376});
+    expect(totals.vatCents, 2363);
+    expect(totals.grossCents, 15490);
+    expect(QuoteTotals.fromLines(lines, discountBasisPoints: 10000).grossCents, 0);
+    expect(() => QuoteTotals.fromLines(lines, discountBasisPoints: 10001), throwsRangeError);
+  });
   test('calculates labor + parts + VAT without double rounding', () {
     const items = [
       QuoteLine(id: 'a', description: 'Diagnostica', kind: LineKind.labor,

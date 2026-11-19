@@ -30,9 +30,10 @@ Lo script genera **solo** le cartelle `android/`, `ios/`, `macos/`, senza sovras
 - Cliente: nome, indirizzo, email, telefono; data, validità e note.
 - Voci: manodopera e ricambi/materiali, quantità fino a 3 decimali, prezzo unitario in centesimi, aliquota IVA 0/4/10/22%.
 - Catalogo: aggiunta, modifica, rimozione e inserimento delle voci nei preventivi, **con snapshot** di descrizione e prezzo.
-- Attività: ragione sociale, P.IVA/C.F., contatti, indirizzo, IBAN.
-- PDF A4 multipagina, imponibile, IVA per aliquota, totale; condivisione attraverso il **foglio di condivisione di sistema** (WhatsApp e email **se disponibili** sul dispositivo).
-- SQLite locale, schema v1 e chiavi esterne attive; nessun account e nessuna connessione obbligatoria.
+- Attività: ragione sociale, P.IVA/C.F., contatti, indirizzo, IBAN, logo e firma facoltativi (PNG/JPEG, fino a 2 MB ciascuno).
+- Preventivo: sconto complessivo percentuale, applicato prima dell'IVA e arrotondato per aliquota; note e condizioni personalizzabili.
+- PDF A4 multipagina con logo, firma, sconto, condizioni, imponibile, IVA per aliquota e totale; condivisione attraverso il **foglio di condivisione di sistema** (WhatsApp e email **se disponibili** sul dispositivo). Logo e firma vengono inclusi nel backup.
+- SQLite locale, schema v3 e chiavi esterne attive; nessun account e nessuna connessione obbligatoria.
 - Navigazione adattiva: barra inferiore su mobile, rail su schermi ampi.
 
 ## Catalogo demo (10.000 voci)

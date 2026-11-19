@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 
@@ -10,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/formatting/amounts.dart';
 import '../../business/domain/business_profile.dart';
 import '../../quotes/domain/models/quote.dart';
+import '../../quotes/domain/models/quote_line.dart';
 
 /// PDF composition is independent of the Flutter widget tree.
 class QuotePdfService {
@@ -23,6 +25,8 @@ class QuotePdfService {
     final money = NumberFormat.currency(locale: 'it_IT', symbol: 'EUR', decimalDigits: 2);
     String amount(int cents) => money.format(cents / 100);
     final totals = quote.totals;
+    final logo = business.logo.isEmpty ? null : pw.MemoryImage(base64Decode(business.logo));
+    final signature = business.signature.isEmpty ? null : pw.MemoryImage(base64Decode(business.signature));
     final issueDate = '${quote.issueDate.day.toString().padLeft(2, '0')}/'
         '${quote.issueDate.month.toString().padLeft(2, '0')}/'
         '${quote.issueDate.year}';
@@ -40,7 +44,15 @@ class QuotePdfService {
           child: pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Text(business.name, style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold)),
+              pw.Expanded(child: pw.Row(children: [
+                if (logo != null) ...[
+                  pw.Container(width: 80, height: 48, alignment: pw.Alignment.centerLeft,
+                    child: pw.Image(logo, fit: pw.BoxFit.contain)),
+                  pw.SizedBox(width: 12),
+                ],
+                pw.Expanded(child: pw.Text(business.name, style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold))),
+              ])),
+              pw.SizedBox(width: 12),
               pw.Text('PREVENTIVO', style: pw.TextStyle(fontSize: 15, color: PdfColors.blueGrey800)),
             ],
           ),
@@ -80,7 +92,7 @@ class QuotePdfService {
           ),
           pw.SizedBox(height: 22),
           pw.Text('N. ${quote.number}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-          pw.Text('Data: $issueDate  •  Valido ${quote.validityDays} giorni'),
+          pw.Text('Data: $issueDate  -  Valido ${quote.validityDays} giorni'),
           pw.SizedBox(height: 20),
           pw.TableHelper.fromTextArray(
             headers: ['Descrizione', 'Tipo', 'Q.tà', 'Prezzo unit.', 'IVA', 'Imponibile'],
@@ -88,7 +100,7 @@ class QuotePdfService {
               for (final line in quote.lines)
                 [
                   line.description,
-                  line.kind.name,
+                  line.kind.label,
                   '${Amounts.quantity(line.quantityMilli)} ${line.unit}',
                   amount(line.unitPriceCents),
                   '${line.vatRate}%',
@@ -110,6 +122,10 @@ class QuotePdfService {
             child: pw.SizedBox(
               width: 240,
               child: pw.Column(children: [
+                if (quote.discountBasisPoints > 0) ...[
+                  _totalRow('Subtotale', amount(totals.subtotalCents)),
+                  _totalRow('Sconto ${Amounts.quantity(quote.discountBasisPoints * 10)}%', '- ${amount(totals.discountCents)}'),
+                ],
                 _totalRow('Imponibile', amount(totals.netCents)),
                 for (final tax in totals.taxableByRate.entries)
                   _totalRow('IVA ${tax.key}%', amount((tax.value * tax.key + 50) ~/ 100)),
@@ -123,9 +139,26 @@ class QuotePdfService {
             _smallHeading('NOTE'),
             pw.Text(quote.notes),
           ],
+          if (quote.conditions.isNotEmpty) ...[
+            pw.SizedBox(height: 20),
+            _smallHeading('CONDIZIONI'),
+            pw.Text(quote.conditions),
+          ],
           if (business.iban.isNotEmpty) ...[
             pw.SizedBox(height: 14),
             pw.Text('IBAN: ${business.iban}', style: const pw.TextStyle(fontSize: 10)),
+          ],
+          if (signature != null) ...[
+            pw.SizedBox(height: 24),
+            pw.Align(alignment: pw.Alignment.centerRight, child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                pw.SizedBox(width: 150, height: 65, child: pw.Image(signature, fit: pw.BoxFit.contain)),
+                pw.Container(width: 150, padding: const pw.EdgeInsets.only(top: 5),
+                  decoration: const pw.BoxDecoration(border: pw.Border(top: pw.BorderSide(color: PdfColors.grey400))),
+                  child: pw.Text('Firma ${business.name}', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 9))),
+              ],
+            )),
           ],
         ],
       ),

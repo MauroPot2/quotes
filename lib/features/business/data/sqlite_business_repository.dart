@@ -21,6 +21,8 @@ class SqliteBusinessRepository implements BusinessRepository {
       email: row['email']! as String,
       phone: row['phone']! as String,
       iban: row['iban']! as String,
+      logo: row['logo']! as String,
+      signature: row['signature']! as String,
     );
   }
 
@@ -35,6 +37,8 @@ class SqliteBusinessRepository implements BusinessRepository {
       'email': profile.email.trim(),
       'phone': profile.phone.trim(),
       'iban': profile.iban.trim(),
+      'logo': profile.logo,
+      'signature': profile.signature,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 }

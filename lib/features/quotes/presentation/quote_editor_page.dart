@@ -48,6 +48,8 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
   late final TextEditingController _customerPhone;
   late final TextEditingController _customerAddress;
   late final TextEditingController _notes;
+  late final TextEditingController _conditions;
+  late final TextEditingController _discount;
   late final TextEditingController _validity;
   late DateTime _issueDate;
   String? _selectedCustomerId;
@@ -62,6 +64,8 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
     _customerPhone = TextEditingController(text: old?.customerPhone ?? '');
     _customerAddress = TextEditingController(text: old?.customerAddress ?? '');
     _notes = TextEditingController(text: old?.notes ?? '');
+    _conditions = TextEditingController(text: old?.conditions ?? '');
+    _discount = TextEditingController(text: Amounts.quantity((old?.discountBasisPoints ?? 0) * 10));
     _validity = TextEditingController(text: '${old?.validityDays ?? 30}');
     _issueDate = old?.issueDate ?? DateTime.now();
     _selectedCustomerId = old?.customerId;
@@ -75,6 +79,8 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
     _customerPhone.dispose();
     _customerAddress.dispose();
     _notes.dispose();
+    _conditions.dispose();
+    _discount.dispose();
     _validity.dispose();
     super.dispose();
   }
@@ -132,6 +138,8 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
       customerPhone: _customerPhone.text,
       customerAddress: _customerAddress.text,
       notes: _notes.text,
+      conditions: _conditions.text,
+      discountBasisPoints: Amounts.parseCents(_discount.text)!,
       issueDate: _issueDate,
       validityDays: int.parse(_validity.text),
       createdAt: old?.createdAt ?? now,
@@ -167,7 +175,9 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
   @override
   Widget build(BuildContext context) {
     final lines = ref.watch(quoteEditorProvider);
-    final totals = QuoteTotals.fromLines(lines);
+    final discount = Amounts.parseCents(_discount.text);
+    final totals = QuoteTotals.fromLines(lines,
+      discountBasisPoints: discount != null && discount <= 10000 ? discount : 0);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -335,11 +345,26 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
                   ],
                 ),
                 const SizedBox(height: 18),
+                TextFormField(
+                  controller: _discount,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Sconto complessivo (%)', helperText: 'Applicato all’imponibile prima dell’IVA'),
+                  onChanged: (_) => setState(() {}),
+                  validator: (value) {
+                    final amount = Amounts.parseCents(value ?? '');
+                    return amount == null || amount > 10000 ? 'Inserisci un valore da 0 a 100, con al massimo 2 decimali' : null;
+                  },
+                ),
+                const SizedBox(height: 12),
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(18),
                     child: Column(
                       children: [
+                        if (totals.discountCents > 0) ...[
+                          _priceRow('Subtotale', Amounts.money(totals.subtotalCents)),
+                          _priceRow('Sconto', '- ${Amounts.money(totals.discountCents)}'),
+                        ],
                         _priceRow('Imponibile', Amounts.money(totals.netCents)),
                         _priceRow('IVA', Amounts.money(totals.vatCents)),
                         const Divider(),
@@ -352,7 +377,13 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
                 TextFormField(
                   controller: _notes,
                   maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Note e condizioni'),
+                  decoration: const InputDecoration(labelText: 'Note'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _conditions,
+                  maxLines: 4,
+                  decoration: const InputDecoration(labelText: 'Condizioni (pagamento, consegna, ecc.)'),
                 ),
               ],
             ),

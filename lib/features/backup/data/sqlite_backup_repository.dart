@@ -22,7 +22,7 @@ class SqliteBackupRepository implements BackupRepository {
       'notes', 'created_at', 'updated_at',
     ],
     'business_profile': [
-      'id', 'name', 'vat_number', 'address', 'email', 'phone', 'iban',
+      'id', 'name', 'vat_number', 'address', 'email', 'phone', 'iban', 'logo', 'signature',
     ],
     'catalog_entries': [
       'id', 'description', 'kind', 'unit', 'price_cents', 'vat_rate',
@@ -30,7 +30,7 @@ class SqliteBackupRepository implements BackupRepository {
     'quotes': [
       'id', 'number', 'customer_id', 'customer_name', 'customer_email',
       'customer_phone', 'customer_address', 'notes', 'issue_date',
-      'validity_days', 'created_at', 'updated_at',
+      'validity_days', 'created_at', 'updated_at', 'conditions', 'discount_basis_points',
     ],
     'quote_lines': [
       'id', 'quote_id', 'position', 'description', 'kind', 'unit',
@@ -41,10 +41,16 @@ class SqliteBackupRepository implements BackupRepository {
   static const _integerColumns = <String, Set<String>>{
     'business_profile': {'id'},
     'catalog_entries': {'price_cents', 'vat_rate'},
-    'quotes': {'validity_days'},
+    'quotes': {'validity_days', 'discount_basis_points'},
     'quote_lines': {
       'position', 'quantity_milli', 'unit_price_cents', 'vat_rate',
     },
+  };
+
+  // Backup v1 files created before these fields existed remain importable.
+  static const _addedDefaults = <String, Map<String, Object>>{
+    'business_profile': {'logo': '', 'signature': ''},
+    'quotes': {'conditions': '', 'discount_basis_points': 0},
   };
 
   static const _deleteOrder = [
@@ -158,13 +164,15 @@ class SqliteBackupRepository implements BackupRepository {
       final rows = <Map<String, Object?>>[];
       for (final raw in rawRows) {
         if (raw is! Map<String, dynamic> ||
-            raw.length != acceptedColumns.length ||
-            !raw.keys.toSet().containsAll(acceptedColumns)) {
+            raw.keys.any((key) => !acceptedColumns.contains(key)) ||
+            !raw.keys.toSet().containsAll(
+              acceptedColumns.difference((_addedDefaults[table] ?? {}).keys.toSet()),
+            )) {
           throw FormatException('Riga non valida in $table.');
         }
         final row = <String, Object?>{};
         for (final column in acceptedColumns) {
-          final value = raw[column];
+          final value = raw.containsKey(column) ? raw[column] : _addedDefaults[table]?[column];
           if (column == 'customer_id' && value == null) {
             row[column] = null;
           } else if (intColumns.contains(column) && value is int) {
@@ -173,6 +181,27 @@ class SqliteBackupRepository implements BackupRepository {
             row[column] = value;
           } else {
             throw FormatException('Tipo non valido: $table.$column');
+          }
+        }
+        if (table == 'quotes' &&
+            ((row['discount_basis_points'] as int) < 0 ||
+             (row['discount_basis_points'] as int) > 10000)) {
+          throw const FormatException('Sconto non valido nel backup.');
+        }
+        if (table == 'business_profile') {
+          for (final column in ['logo', 'signature']) {
+            final encoded = row[column] as String;
+            if (encoded.isEmpty) continue;
+            try {
+              final image = base64Decode(encoded);
+              final png = image.length >= 8 && base64Encode(image.sublist(0, 8)) == 'iVBORw0KGgo=';
+              final jpeg = image.length >= 3 && image[0] == 0xff && image[1] == 0xd8 && image[2] == 0xff;
+              if (image.length > 2 * 1024 * 1024 || (!png && !jpeg)) {
+                throw const FormatException();
+              }
+            } catch (_) {
+              throw FormatException('Immagine non valida: $table.$column');
+            }
           }
         }
         rows.add(row);

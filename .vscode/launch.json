@@ -6,6 +6,13 @@
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart"
+    },
+    {
+      "name": "Preventivo (catalogo fake)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": ["--dart-define=USE_FAKE_CATALOG=true"]
     }
   ]
 }

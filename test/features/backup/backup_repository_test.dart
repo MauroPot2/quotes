@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preventivo/core/database/local_database.dart';
 import 'package:preventivo/features/backup/data/sqlite_backup_repository.dart';
+import 'package:preventivo/features/business/data/sqlite_business_repository.dart';
+import 'package:preventivo/features/business/domain/business_profile.dart';
 import 'package:preventivo/features/customers/data/sqlite_customer_repository.dart';
 import 'package:preventivo/features/customers/domain/customer.dart';
 import 'package:preventivo/features/catalog/data/sqlite_catalog_repository.dart';
@@ -57,6 +59,8 @@ void main() {
       customerPhone: '',
       customerAddress: '',
       notes: '',
+      conditions: 'Pagamento a 30 giorni',
+      discountBasisPoints: 1250,
       issueDate: now,
       validityDays: 30,
       createdAt: now,
@@ -77,6 +81,11 @@ void main() {
 
   test('esportazione e ripristino di clienti, preventivi e catalogo', () async {
     await populate();
+    await SqliteBusinessRepository(database).save(const BusinessProfile(
+      name: 'Officina',
+      logo: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC',
+      signature: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC',
+    ));
     final bytes = await backup.exportBackup();
     final preview = backup.inspect(bytes);
     expect(preview.customers, 1);
@@ -95,9 +104,34 @@ void main() {
     expect(restoredQuote.customerId, customerId);
     expect(restoredQuote.customerName, 'Cliente backup');
     expect(restoredQuote.lines.single.quantityMilli, 2000);
+    expect(restoredQuote.conditions, 'Pagamento a 30 giorni');
+    expect(restoredQuote.discountBasisPoints, 1250);
+    final profile = await SqliteBusinessRepository(database).load();
+    expect(profile.logo, isNotEmpty);
+    expect(profile.signature, profile.logo);
     expect((await customers.getAll()).single.id, customerId);
     expect((await SqliteCatalogRepository(database).getAll()).single.id,
         'article-1');
+  });
+
+  test('i backup precedenti ai nuovi campi restano importabili', () async {
+    await populate();
+    await SqliteBusinessRepository(database).save(const BusinessProfile(name: 'Officina'));
+    final decoded = jsonDecode(utf8.decode(await backup.exportBackup())) as Map<String, dynamic>;
+    final tables = decoded['tables'] as Map<String, dynamic>;
+    for (final row in tables['quotes'] as List<dynamic>) {
+      (row as Map<String, dynamic>)..remove('conditions')..remove('discount_basis_points');
+    }
+    for (final row in tables['business_profile'] as List<dynamic>) {
+      (row as Map<String, dynamic>)..remove('logo')..remove('signature');
+    }
+    await backup.restore(Uint8List.fromList(utf8.encode(jsonEncode(decoded))));
+    final quote = (await quotes.getAll()).single;
+    expect(quote.conditions, '');
+    expect(quote.discountBasisPoints, 0);
+    final profile = await SqliteBusinessRepository(database).load();
+    expect(profile.logo, '');
+    expect(profile.signature, '');
   });
 
   test('file JSON non valido non modifica i dati locali', () async {

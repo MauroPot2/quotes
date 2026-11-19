@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
+import 'package:file_selector/file_selector.dart' as selector;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -34,6 +39,8 @@ class _BusinessFormState extends ConsumerState<_BusinessForm> {
   late final TextEditingController _phone;
   late final TextEditingController _iban;
   bool _saving = false;
+  late String _logo;
+  late String _signature;
 
   @override
   void initState() {
@@ -45,6 +52,8 @@ class _BusinessFormState extends ConsumerState<_BusinessForm> {
     _email = TextEditingController(text: data.email);
     _phone = TextEditingController(text: data.phone);
     _iban = TextEditingController(text: data.iban);
+    _logo = data.logo;
+    _signature = data.signature;
   }
 
   @override
@@ -66,6 +75,8 @@ class _BusinessFormState extends ConsumerState<_BusinessForm> {
         email: _email.text,
         phone: _phone.text,
         iban: _iban.text,
+        logo: _logo,
+        signature: _signature,
       ));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -78,6 +89,51 @@ class _BusinessFormState extends ConsumerState<_BusinessForm> {
       if (mounted) setState(() => _saving = false);
     }
   }
+
+  Future<void> _pickImage({required bool signature}) async {
+    try {
+      final file = await selector.openFile(acceptedTypeGroups: const [
+        selector.XTypeGroup(label: 'Immagini PNG o JPEG', extensions: ['png', 'jpg', 'jpeg'],
+          mimeTypes: ['image/png', 'image/jpeg'], uniformTypeIdentifiers: ['public.png', 'public.jpeg']),
+      ]);
+      if (file == null) return;
+      if (await file.length() > 2 * 1024 * 1024) {
+        throw const FormatException('Immagine troppo grande (massimo 2 MB).');
+      }
+      final bytes = await file.readAsBytes();
+      final png = bytes.length >= 8 && base64Encode(bytes.sublist(0, 8)) == 'iVBORw0KGgo=';
+      final jpeg = bytes.length >= 3 && bytes[0] == 0xff && bytes[1] == 0xd8 && bytes[2] == 0xff;
+      if (!png && !jpeg) throw const FormatException('Seleziona un file PNG o JPEG valido.');
+      final codec = await ui.instantiateImageCodec(bytes);
+      try {
+        final frame = await codec.getNextFrame();
+        final image = frame.image;
+        final tooLarge = image.width > 4096 || image.height > 4096;
+        image.dispose();
+        if (tooLarge) throw const FormatException('Dimensioni immagine massime: 4096 × 4096 pixel.');
+      } finally {
+        codec.dispose();
+      }
+      if (!mounted) return;
+      setState(() { if (signature) { _signature = base64Encode(bytes); } else { _logo = base64Encode(bytes); } });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error is FormatException ? error.message : 'Immagine non valida: $error')));
+    }
+  }
+
+  Widget _imageField(String label, String data, {required bool signature}) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 8),
+      if (data.isNotEmpty) Image.memory(Uint8List.fromList(base64Decode(data)), height: 80, width: 180, fit: BoxFit.contain),
+      Wrap(spacing: 8, children: [
+        OutlinedButton.icon(onPressed: () => _pickImage(signature: signature), icon: const Icon(Icons.image_outlined), label: Text(data.isEmpty ? 'Scegli immagine' : 'Sostituisci')),
+        if (data.isNotEmpty) TextButton(onPressed: () => setState(() { if (signature) { _signature = ''; } else { _logo = ''; } }), child: const Text('Rimuovi')),
+      ]),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) => Center(child: ConstrainedBox(
@@ -108,6 +164,12 @@ class _BusinessFormState extends ConsumerState<_BusinessForm> {
         const SizedBox(height: 12),
         TextFormField(controller: _iban,
           decoration: const InputDecoration(labelText: 'IBAN (facoltativo)')),
+        const SizedBox(height: 22),
+        const Text('Logo e firma: immagini PNG o JPEG, massimo 2 MB ciascuna.'),
+        const SizedBox(height: 12),
+        _imageField('Logo attività', _logo, signature: false),
+        const SizedBox(height: 12),
+        _imageField('Firma attività', _signature, signature: true),
         const SizedBox(height: 22),
         FilledButton.icon(onPressed: _saving ? null : _save,
           icon: const Icon(Icons.save_outlined), label: const Text('Salva dati attività')),

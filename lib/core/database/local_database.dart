@@ -21,7 +21,7 @@ class LocalDatabase {
     return _factory.openDatabase(
       location,
       options: OpenDatabaseOptions(
-        version: 2,
+        version: 3,
         onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
         onCreate: (db, version) async {
           await _createCustomers(db);
@@ -35,6 +35,8 @@ class LocalDatabase {
               customer_phone TEXT NOT NULL,
               customer_address TEXT NOT NULL,
               notes TEXT NOT NULL,
+              conditions TEXT NOT NULL DEFAULT '',
+              discount_basis_points INTEGER NOT NULL DEFAULT 0 CHECK(discount_basis_points BETWEEN 0 AND 10000),
               issue_date TEXT NOT NULL,
               validity_days INTEGER NOT NULL,
               created_at TEXT NOT NULL,
@@ -72,7 +74,9 @@ class LocalDatabase {
               address TEXT NOT NULL,
               email TEXT NOT NULL,
               phone TEXT NOT NULL,
-              iban TEXT NOT NULL
+              iban TEXT NOT NULL,
+              logo TEXT NOT NULL DEFAULT '',
+              signature TEXT NOT NULL DEFAULT ''
             )
           ''');
           await db.execute('CREATE INDEX idx_quote_lines_quote_id '
@@ -89,6 +93,12 @@ class LocalDatabase {
                 'customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL');
             await db.execute('CREATE INDEX idx_quotes_customer_id '
                 'ON quotes(customer_id)');
+          }
+          if (oldVersion < 3) {
+            await db.execute("ALTER TABLE quotes ADD COLUMN conditions TEXT NOT NULL DEFAULT ''");
+            await db.execute('ALTER TABLE quotes ADD COLUMN discount_basis_points INTEGER NOT NULL DEFAULT 0 CHECK(discount_basis_points BETWEEN 0 AND 10000)');
+            await db.execute("ALTER TABLE business_profile ADD COLUMN logo TEXT NOT NULL DEFAULT ''");
+            await db.execute("ALTER TABLE business_profile ADD COLUMN signature TEXT NOT NULL DEFAULT ''");
           }
         },
       ),

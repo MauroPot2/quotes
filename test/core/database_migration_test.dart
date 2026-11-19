@@ -32,6 +32,12 @@ void main() {
                 updated_at TEXT NOT NULL
               )
             ''');
+            await db.execute('''
+              CREATE TABLE business_profile (
+                id INTEGER PRIMARY KEY, name TEXT NOT NULL, vat_number TEXT NOT NULL,
+                address TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, iban TEXT NOT NULL
+              )
+            ''');
             await db.insert('quotes', {
               'id': 'existing-quote',
               'number': 'P-2026-0001',
@@ -62,7 +68,9 @@ void main() {
         expect(rows.single['customer_id'], isNull);
         expect(await db.query('customers'), isEmpty);
         final version = await db.rawQuery('PRAGMA user_version');
-        expect(version.single.values.single, 2);
+        expect(rows.single['conditions'], '');
+        expect(rows.single['discount_basis_points'], 0);
+        expect(version.single.values.single, 3);
       } finally {
         await migrated.close();
       }
