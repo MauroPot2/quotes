@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'app_shell.dart';
+import 'splash_screen.dart';
 
 class PreventivoApp extends StatelessWidget {
   const PreventivoApp({super.key});
@@ -20,6 +21,6 @@ class PreventivoApp extends StatelessWidget {
         contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 14),
       ),
     ),
-    home: const AppShell(),
+    home: const SplashScreen(child: AppShell()),
   );
 }

@@ -36,6 +36,22 @@ Lo script genera **solo** le cartelle `android/`, `ios/`, `macos/`, senza sovras
 - SQLite locale, schema v3 e chiavi esterne attive; nessun account e nessuna connessione obbligatoria.
 - Navigazione adattiva: barra inferiore su mobile, rail su schermi ampi.
 
+## Icone dell'app
+
+Le icone Android e iOS sono generate dal logo `assets/icon/app_icon.png` tramite
+`flutter_launcher_icons`, configurato in `pubspec.yaml`. Per aggiornarle dopo
+aver sostituito il logo:
+
+```bash
+flutter pub get
+dart run tool/generate_launcher_icons.dart
+```
+
+Il generatore include un'icona adattiva Android e rimuove il canale alfa dalle
+icone iOS. Il comando preserva anche le impostazioni del progetto Xcode. Il logo
+originale misura 768 × 768 pixel; l'icona iOS da 1024 pixel
+viene quindi ingrandita dal generatore.
+
 ## Catalogo demo (10.000 voci)
 
 Per verificare prestazioni e usabilita del catalogo con molti dati, puoi
