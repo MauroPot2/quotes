@@ -54,6 +54,23 @@ void main() {
     expect((await repository.getById(saved.id))!.customerName, 'Nuovo');
   });
 
+  test('status viene salvato separatamente e sopravvive alla modifica del preventivo', () async {
+    final saved = await SaveQuote(repository)(makeQuote('Cliente'));
+    expect(saved.status, QuoteStatus.pending);
+    await repository.updateStatus(saved.id, QuoteStatus.accepted);
+    expect((await repository.getById(saved.id))!.status, QuoteStatus.accepted);
+    await SaveQuote(repository)(makeQuote('Modificato', id: saved.id, number: saved.number));
+    final updated = (await repository.getById(saved.id))!;
+    expect(updated.status, QuoteStatus.accepted);
+    expect(updated.customerName, 'Modificato');
+    expect(updated.lines, hasLength(1));
+    await repository.updateStatus(saved.id, QuoteStatus.rejected);
+    expect((await repository.getAll()).single.status, QuoteStatus.rejected);
+    await repository.updateStatus(saved.id, QuoteStatus.pending);
+    expect((await repository.getById(saved.id))!.status, QuoteStatus.pending);
+    await expectLater(repository.updateStatus('missing', QuoteStatus.accepted), throwsStateError);
+  });
+
   test('deleting catalog entry does not mutate saved quote snapshots', () async {
     final catalog = SqliteCatalogRepository(database);
     await catalog.save(const CatalogEntry(

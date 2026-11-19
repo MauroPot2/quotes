@@ -30,7 +30,7 @@ class SqliteBackupRepository implements BackupRepository {
     'quotes': [
       'id', 'number', 'customer_id', 'customer_name', 'customer_email',
       'customer_phone', 'customer_address', 'notes', 'issue_date',
-      'validity_days', 'created_at', 'updated_at', 'conditions', 'discount_basis_points',
+      'validity_days', 'created_at', 'updated_at', 'conditions', 'discount_basis_points', 'status',
     ],
     'quote_lines': [
       'id', 'quote_id', 'position', 'description', 'kind', 'unit',
@@ -50,7 +50,7 @@ class SqliteBackupRepository implements BackupRepository {
   // Backup v1 files created before these fields existed remain importable.
   static const _addedDefaults = <String, Map<String, Object>>{
     'business_profile': {'logo': '', 'signature': ''},
-    'quotes': {'conditions': '', 'discount_basis_points': 0},
+    'quotes': {'conditions': '', 'discount_basis_points': 0, 'status': 'pending'},
   };
 
   static const _deleteOrder = [
@@ -187,6 +187,9 @@ class SqliteBackupRepository implements BackupRepository {
             ((row['discount_basis_points'] as int) < 0 ||
              (row['discount_basis_points'] as int) > 10000)) {
           throw const FormatException('Sconto non valido nel backup.');
+        }
+        if (table == 'quotes' && !const {'pending', 'accepted', 'rejected'}.contains(row['status'])) {
+          throw const FormatException('Stato preventivo non valido nel backup.');
         }
         if (table == 'business_profile') {
           for (final column in ['logo', 'signature']) {

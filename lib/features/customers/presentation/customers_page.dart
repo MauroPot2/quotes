@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/presentation/error_popup.dart';
 import '../domain/customer.dart';
 import 'customer_dialog.dart';
 
@@ -25,9 +26,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       await ref.read(customersProvider.notifier).save(result);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cliente non salvato: $error')),
-      );
+      showErrorPopup(context, error is FormatException ? error.message : 'Cliente non salvato: $error');
     }
   }
 
@@ -53,9 +52,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       await ref.read(customersProvider.notifier).delete(customer.id);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cliente non eliminato: $error')),
-      );
+      showErrorPopup(context, 'Cliente non eliminato: $error');
     }
   }
 

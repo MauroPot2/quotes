@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/presentation/error_popup.dart';
 import '../domain/customer.dart';
 import 'customer_dialog.dart';
 
@@ -28,9 +29,7 @@ class _CustomerPickerState extends ConsumerState<CustomerPicker> {
       Navigator.pop(context, saved);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cliente non salvato: $error')),
-      );
+      showErrorPopup(context, error is FormatException ? error.message : 'Cliente non salvato: $error');
     }
   }
 

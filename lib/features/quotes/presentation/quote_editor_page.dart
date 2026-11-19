@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../app/providers.dart';
 import '../../../core/formatting/amounts.dart';
+import '../../../core/presentation/error_popup.dart';
 import '../../catalog/domain/catalog_entry.dart';
 import '../../customers/domain/customer.dart';
 import '../../customers/presentation/customer_picker.dart';
@@ -151,8 +152,7 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
   Future<void> _save() async {
     if (_saving || !_formKey.currentState!.validate()) return;
     if (ref.read(quoteEditorProvider).isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Aggiungi almeno una voce.')));
+      showErrorPopup(context, 'Aggiungi almeno una voce.');
       return;
     }
     setState(() => _saving = true);
@@ -162,11 +162,7 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error is FormatException ? error.message : 'Salvataggio fallito: $error'),
-        ),
-      );
+      showErrorPopup(context, error is FormatException ? error.message : 'Salvataggio fallito: $error');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -216,6 +212,11 @@ class _QuoteEditorFormState extends ConsumerState<_QuoteEditorForm> {
                   const Padding(
                     padding: EdgeInsets.only(bottom: 10),
                     child: Text('Cliente collegato: i dati vengono copiati nel preventivo.'),
+                  ),
+                if (_selectedCustomerId == null)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 10),
+                    child: Text('Al salvataggio il cliente verrà aggiunto all’anagrafica, se non è già presente.'),
                   ),
                 TextFormField(
                   controller: _customerName,

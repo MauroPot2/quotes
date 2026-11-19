@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/presentation/error_popup.dart';
 import '../../quotes/domain/models/quote.dart';
 import '../application/quote_pdf_service.dart';
 
@@ -16,8 +17,6 @@ Future<void> shareQuote(BuildContext context, WidgetRef ref, Quote quote) async 
     await const QuotePdfService().share(quote: quote, business: profile, origin: origin);
   } catch (error) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(error is FormatException ? error.message : 'PDF non condiviso: $error')),
-    );
+    showErrorPopup(context, error is FormatException ? error.message : 'PDF non condiviso: $error');
   }
 }

@@ -26,14 +26,16 @@ Lo script genera **solo** le cartelle `android/`, `ios/`, `macos/`, senza sovras
 
 ## Funzioni già implementate
 
-- Preventivi: nuovo, modifica, cancellazione con conferma, numerazione automatica annuale `P-2026-0001`.
+- Preventivi: nuovo, modifica, cancellazione con conferma, numerazione automatica annuale `P-2026-0001`; stato in attesa, accettato o rifiutato e filtri per cliente, mese e anno della data del preventivo.
+- Nella lista preventivi il pulsante **Condividi PDF** apre il menu di sistema: scegli WhatsApp o l'app email e poi il destinatario.
 - Cliente: nome, indirizzo, email, telefono; data, validità e note.
 - Voci: manodopera e ricambi/materiali, quantità fino a 3 decimali, prezzo unitario in centesimi, aliquota IVA 0/4/10/22%.
 - Catalogo: aggiunta, modifica, rimozione e inserimento delle voci nei preventivi, **con snapshot** di descrizione e prezzo.
 - Attività: ragione sociale, P.IVA/C.F., contatti, indirizzo, IBAN, logo e firma facoltativi (PNG/JPEG, fino a 2 MB ciascuno).
+- I clienti inseriti nei preventivi vengono aggiunti all'anagrafica se non esiste un cliente compatibile; in caso di più corrispondenze occorre selezionare il cliente.
 - Preventivo: sconto complessivo percentuale, applicato prima dell'IVA e arrotondato per aliquota; note e condizioni personalizzabili.
 - PDF A4 multipagina con logo, firma, sconto, condizioni, imponibile, IVA per aliquota e totale; condivisione attraverso il **foglio di condivisione di sistema** (WhatsApp e email **se disponibili** sul dispositivo). Logo e firma vengono inclusi nel backup.
-- SQLite locale, schema v3 e chiavi esterne attive; nessun account e nessuna connessione obbligatoria.
+- SQLite locale, schema v4 e chiavi esterne attive; nessun account e nessuna connessione obbligatoria.
 - Navigazione adattiva: barra inferiore su mobile, rail su schermi ampi.
 
 ## Icone dell'app
@@ -51,6 +53,18 @@ Il generatore include un'icona adattiva Android e rimuove il canale alfa dalle
 icone iOS. Il comando preserva anche le impostazioni del progetto Xcode. Il logo
 originale misura 768 × 768 pixel; l'icona iOS da 1024 pixel
 viene quindi ingrandita dal generatore.
+
+## Importazione catalogo CSV
+
+Nella schermata Catalogo, il pulsante **Importa CSV** permette di caricare un
+file UTF-8 con intestazioni (massimo 10 MB e 20.000 righe), associare descrizione,
+prezzo e colonne facoltative, impostare i valori predefiniti e verificare
+un'anteprima. I prezzi accettano ad esempio `12,50` o `12.50` senza separatori
+delle migliaia. Le righe non valide vengono segnalate e saltate solo dopo la
+conferma. Si possono aggiungere le voci o sostituire il catalogo, con una
+conferma esplicita; la sostituzione non modifica i preventivi già salvati.
+L'aggiunta non deduplica i prodotti: importando più volte lo stesso file si
+ottengono voci duplicate. Con il catalogo demo le modifiche restano temporanee.
 
 ## Catalogo demo (10.000 voci)
 

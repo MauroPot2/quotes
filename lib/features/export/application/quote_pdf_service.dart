@@ -15,7 +15,9 @@ import '../../quotes/domain/models/quote_line.dart';
 
 /// PDF composition is independent of the Flutter widget tree.
 class QuotePdfService {
-  const QuotePdfService();
+  const QuotePdfService({this.shareFile});
+
+  final Future<ShareResult> Function(ShareParams)? shareFile;
 
   Future<Uint8List> generate(Quote quote, BusinessProfile business) async {
     if (business.name.trim().isEmpty) {
@@ -173,7 +175,7 @@ class QuotePdfService {
   }) async {
     final bytes = await generate(quote, business);
     final fileName = 'preventivo_${quote.number.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')}.pdf';
-    return SharePlus.instance.share(
+    return (shareFile ?? SharePlus.instance.share)(
       ShareParams(
         title: 'Preventivo ${quote.number}',
         subject: 'Preventivo ${quote.number}',

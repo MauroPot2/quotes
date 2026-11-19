@@ -23,5 +23,7 @@ abstract interface class CatalogRepository {
   });
 
   Future<void> save(CatalogEntry entry);
+  /// Import atomico; replace cancella il catalogo solo se tutte le righe sono valide.
+  Future<void> importEntries(List<CatalogEntry> entries, {bool replace = false});
   Future<void> delete(String id);
 }

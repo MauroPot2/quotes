@@ -88,12 +88,19 @@ class QuotesViewModel extends AsyncNotifier<List<Quote>> {
   Future<Quote> save(Quote quote) async {
     final saved = await SaveQuote(ref.read(quoteRepositoryProvider)).call(quote);
     ref.invalidate(quoteProvider(saved.id));
+    ref.invalidate(customersProvider);
     ref.invalidateSelf();
     return saved;
   }
 
   Future<void> delete(String id) async {
     await ref.read(quoteRepositoryProvider).delete(id);
+    ref.invalidate(quoteProvider(id));
+    ref.invalidateSelf();
+  }
+
+  Future<void> updateStatus(String id, QuoteStatus status) async {
+    await ref.read(quoteRepositoryProvider).updateStatus(id, status);
     ref.invalidate(quoteProvider(id));
     ref.invalidateSelf();
   }
@@ -121,6 +128,12 @@ class CatalogViewModel extends AsyncNotifier<List<CatalogEntry>> {
 
   Future<void> save(CatalogEntry entry) async {
     await ref.read(catalogRepositoryProvider).save(entry);
+    ref.invalidate(catalogSearchProvider);
+    ref.invalidateSelf();
+  }
+
+  Future<void> importEntries(List<CatalogEntry> entries, {bool replace = false}) async {
+    await ref.read(catalogRepositoryProvider).importEntries(entries, replace: replace);
     ref.invalidate(catalogSearchProvider);
     ref.invalidateSelf();
   }

@@ -1,5 +1,15 @@
 import 'quote_line.dart';
 
+enum QuoteStatus { pending, accepted, rejected }
+
+extension QuoteStatusLabel on QuoteStatus {
+  String get label => switch (this) {
+    QuoteStatus.pending => 'In attesa',
+    QuoteStatus.accepted => 'Accettato',
+    QuoteStatus.rejected => 'Rifiutato',
+  };
+}
+
 class Quote {
   Quote({
     required this.id,
@@ -12,6 +22,7 @@ class Quote {
     required this.notes,
     this.conditions = '',
     this.discountBasisPoints = 0,
+    this.status = QuoteStatus.pending,
     required this.issueDate,
     required this.validityDays,
     required this.createdAt,
@@ -30,6 +41,7 @@ class Quote {
   final String conditions;
   /// Percentage in hundredths: 10000 means 100%.
   final int discountBasisPoints;
+  final QuoteStatus status;
   final DateTime issueDate;
   final int validityDays;
   final DateTime createdAt;

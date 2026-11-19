@@ -103,4 +103,39 @@ void main() {
       throwsA(isA<FormatException>()),
     );
   });
+
+  test('salva automaticamente il cliente e riusa quello corrispondente', () async {
+    final now = DateTime(2026);
+    Quote draft(String id) => Quote(id: '', number: '', customerName: '  Mario Rossi  ',
+      customerEmail: 'MARIO@example.com', customerPhone: '', customerAddress: '', notes: '',
+      issueDate: now, validityDays: 30, createdAt: now, updatedAt: now,
+      lines: [QuoteLine(id: id, description: 'Lavoro', kind: LineKind.labor, unit: 'h', quantityMilli: 1000, unitPriceCents: 1000, vatRate: 22)]);
+    final first = await quotes.save(draft('line-1'));
+    final second = await quotes.save(draft('line-2'));
+    expect(first.customerId, isNotNull);
+    expect(second.customerId, first.customerId);
+    expect((await customers.getAll()).single.name, 'Mario Rossi');
+  });
+
+  test('clienti ambigui richiedono una scelta senza salvare il preventivo', () async {
+    await customers.save(makeCustomer());
+    await customers.save(makeCustomer());
+    final now = DateTime(2026);
+    await expectLater(quotes.save(Quote(id: '', number: '', customerName: 'Mario Rossi',
+      customerEmail: '', customerPhone: '', customerAddress: '', notes: '', issueDate: now,
+      validityDays: 30, createdAt: now, updatedAt: now, lines: const [])), throwsFormatException);
+    expect(await quotes.getAll(), isEmpty);
+    expect(await customers.getAll(), hasLength(2));
+  });
+
+  test('il cliente creato viene annullato se il salvataggio del preventivo fallisce', () async {
+    final now = DateTime(2026);
+    final badLine = QuoteLine(id: 'duplicate', description: 'Test', kind: LineKind.part,
+      unit: 'pz', quantityMilli: 1000, unitPriceCents: 100, vatRate: 22);
+    await expectLater(quotes.save(Quote(id: '', number: '', customerName: 'Cliente nuovo',
+      customerEmail: '', customerPhone: '', customerAddress: '', notes: '', issueDate: now,
+      validityDays: 30, createdAt: now, updatedAt: now, lines: [badLine, badLine])), throwsA(isA<Exception>()));
+    expect(await customers.getAll(), isEmpty);
+    expect(await quotes.getAll(), isEmpty);
+  });
 }

@@ -48,10 +48,14 @@ class SqliteQuoteRepository implements QuoteRepository {
       final id = isNew ? const Uuid().v4() : quote.id;
       final number = isNew ? await _nextNumber(txn, quote.issueDate.year) : quote.number;
       final now = DateTime.now();
+      // Status changes are independent of edits made in an already open editor.
+      final existing = isNew ? null : await txn.query('quotes', columns: ['status'], where: 'id = ?', whereArgs: [id], limit: 1);
+      if (!isNew && existing!.isEmpty) throw StateError('Preventivo non trovato.');
+      final customerId = await _resolveCustomer(txn, quote, now);
       final saved = Quote(
         id: id,
         number: number,
-        customerId: quote.customerId,
+        customerId: customerId,
         customerName: quote.customerName.trim(),
         customerEmail: quote.customerEmail.trim(),
         customerPhone: quote.customerPhone.trim(),
@@ -59,6 +63,7 @@ class SqliteQuoteRepository implements QuoteRepository {
         notes: quote.notes.trim(),
         conditions: quote.conditions.trim(),
         discountBasisPoints: quote.discountBasisPoints,
+        status: isNew ? quote.status : QuoteStatus.values.byName(existing!.single['status']! as String),
         issueDate: quote.issueDate,
         validityDays: quote.validityDays,
         createdAt: isNew ? now : quote.createdAt,
@@ -76,6 +81,7 @@ class SqliteQuoteRepository implements QuoteRepository {
         'notes': saved.notes,
         'conditions': saved.conditions,
         'discount_basis_points': saved.discountBasisPoints,
+        'status': saved.status.name,
         'issue_date': saved.issueDate.toIso8601String(),
         'validity_days': saved.validityDays,
         'created_at': saved.createdAt.toIso8601String(),
@@ -106,6 +112,45 @@ class SqliteQuoteRepository implements QuoteRepository {
     });
   }
 
+  Future<String> _resolveCustomer(Transaction txn, Quote quote, DateTime now) async {
+    if (quote.customerName.trim().isEmpty) {
+      throw const FormatException('Inserisci il nome del cliente.');
+    }
+    if (quote.customerId != null) return quote.customerId!;
+    String normalize(String value) => value.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
+    String phone(String value) => value.replaceAll(RegExp(r'[^0-9+]'), '');
+    bool compatible(String left, String right) => left.isEmpty || right.isEmpty || left == right;
+    final name = normalize(quote.customerName);
+    final matches = (await txn.query('customers')).where((row) =>
+      normalize(row['name']! as String) == name &&
+      compatible(normalize(row['email']! as String), normalize(quote.customerEmail)) &&
+      compatible(phone(row['phone']! as String), phone(quote.customerPhone)) &&
+      compatible(normalize(row['address']! as String), normalize(quote.customerAddress))
+    ).toList();
+    if (matches.length > 1) {
+      throw const FormatException('Più clienti corrispondono ai dati inseriti. Seleziona il cliente dall’anagrafica.');
+    }
+    if (matches.length == 1) return matches.single['id']! as String;
+    final id = const Uuid().v4();
+    await txn.insert('customers', {
+      'id': id, 'name': quote.customerName.trim(), 'email': quote.customerEmail.trim(),
+      'phone': quote.customerPhone.trim(), 'address': quote.customerAddress.trim(),
+      'vat_number': '', 'notes': '', 'created_at': now.toIso8601String(),
+      'updated_at': now.toIso8601String(),
+    });
+    return id;
+  }
+
+  @override
+  Future<void> updateStatus(String id, QuoteStatus status) async {
+    final db = await database.instance;
+    final count = await db.update('quotes', {
+      'status': status.name,
+      'updated_at': DateTime.now().toIso8601String(),
+    }, where: 'id = ?', whereArgs: [id]);
+    if (count != 1) throw StateError('Preventivo non trovato.');
+  }
+
   Future<String> _nextNumber(Transaction txn, int year) async {
     final prefix = 'P-$year-';
     final rows = await txn.rawQuery('''
@@ -134,6 +179,7 @@ class SqliteQuoteRepository implements QuoteRepository {
       notes: row['notes']! as String,
       conditions: row['conditions']! as String,
       discountBasisPoints: row['discount_basis_points']! as int,
+      status: QuoteStatus.values.byName(row['status']! as String),
       issueDate: DateTime.parse(row['issue_date']! as String),
       validityDays: row['validity_days']! as int,
       createdAt: DateTime.parse(row['created_at']! as String),

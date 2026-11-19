@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/presentation/error_popup.dart';
 import '../domain/business_profile.dart';
 
 class BusinessPage extends ConsumerWidget {
@@ -84,7 +85,7 @@ class _BusinessFormState extends ConsumerState<_BusinessForm> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+      showErrorPopup(context, error is FormatException ? error.message : 'Salvataggio fallito: $error');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -118,7 +119,7 @@ class _BusinessFormState extends ConsumerState<_BusinessForm> {
       setState(() { if (signature) { _signature = base64Encode(bytes); } else { _logo = base64Encode(bytes); } });
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error is FormatException ? error.message : 'Immagine non valida: $error')));
+      showErrorPopup(context, error is FormatException ? error.message : 'Immagine non valida: $error');
     }
   }
 

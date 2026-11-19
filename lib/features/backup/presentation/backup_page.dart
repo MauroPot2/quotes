@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/presentation/error_popup.dart';
 import '../domain/backup_repository.dart';
 
 class BackupPage extends ConsumerStatefulWidget {
@@ -19,8 +20,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
   void _showError(Object error) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Operazione non riuscita: $error')));
+    showErrorPopup(context, error is FormatException ? error.message : 'Operazione non riuscita: $error');
   }
 
   Future<void> _exportBackup() async {

@@ -81,6 +81,25 @@ class SqliteCatalogRepository implements CatalogRepository {
   }
 
   @override
+  Future<void> importEntries(List<CatalogEntry> entries, {bool replace = false}) async {
+    if (entries.isEmpty || entries.any((entry) => entry.id.isEmpty || entry.description.trim().isEmpty || entry.unit.trim().isEmpty || entry.priceCents < 0 || !const {0, 4, 10, 22}.contains(entry.vatRate))) {
+      throw const FormatException('Importazione senza voci valide.');
+    }
+    final db = await database.instance;
+    await db.transaction((txn) async {
+      if (replace) await txn.delete('catalog_entries');
+      final batch = txn.batch();
+      for (final entry in entries) {
+        batch.insert('catalog_entries', {
+          'id': entry.id, 'description': entry.description.trim(), 'kind': entry.kind.name,
+          'unit': entry.unit.trim(), 'price_cents': entry.priceCents, 'vat_rate': entry.vatRate,
+        });
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  @override
   Future<void> delete(String id) async {
     final db = await database.instance;
     await db.delete('catalog_entries', where: 'id = ?', whereArgs: [id]);

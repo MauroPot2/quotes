@@ -6,6 +6,18 @@ import 'package:preventivo/features/quotes/domain/models/quote_line.dart';
 import 'package:preventivo/features/quotes/presentation/quote_editor_page.dart';
 
 void main() {
+  testWidgets('mostra il popup di errore se non ci sono voci', (tester) async {
+    await tester.pumpWidget(const ProviderScope(child: MaterialApp(home: QuoteEditorPage())));
+    await tester.enterText(find.widgetWithText(TextFormField, 'Nome / ragione sociale *'), 'Cliente');
+    await tester.tap(find.text('Salva preventivo'));
+    await tester.pump();
+    expect(find.text('Aggiungi almeno una voce.'), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump();
+    expect(find.text('Aggiungi almeno una voce.'), findsNothing);
+  });
+
   testWidgets('nuovo preventivo apre un editor vuoto senza eccezioni',
       (tester) async {
     await tester.pumpWidget(
@@ -14,6 +26,8 @@ void main() {
       ),
     );
 
+    await tester.scrollUntilVisible(find.text('Voci (0)'), 300,
+      scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first);
     expect(tester.takeException(), isNull);
     expect(find.text('Voci (0)'), findsOneWidget);
   });
@@ -55,6 +69,8 @@ void main() {
         ),
       ),
     );
+    await tester.scrollUntilVisible(find.text('Voci (1)'), 300,
+      scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first);
     expect(tester.takeException(), isNull);
     expect(find.text('Voci (1)'), findsOneWidget);
 
@@ -66,6 +82,8 @@ void main() {
         ),
       ),
     );
+    await tester.scrollUntilVisible(find.text('Voci (0)'), 300,
+      scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first);
     expect(tester.takeException(), isNull);
     expect(find.text('Voci (0)'), findsOneWidget);
   });

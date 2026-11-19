@@ -3,10 +3,12 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../app/providers.dart';
 import '../../../core/formatting/amounts.dart';
+import '../../../core/presentation/error_popup.dart';
 import '../../quotes/domain/models/quote_line.dart';
 import '../domain/catalog_entry.dart';
 import 'catalog_entry_dialog.dart';
 import 'catalog_search_results.dart';
+import 'catalog_import_page.dart';
 
 class CatalogPage extends ConsumerWidget {
   const CatalogPage({super.key});
@@ -21,7 +23,7 @@ class CatalogPage extends ConsumerWidget {
       await ref.read(catalogProvider.notifier).save(result);
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+      showErrorPopup(context, error is FormatException ? error.message : 'Salvataggio fallito: $error');
     }
   }
 
@@ -42,13 +44,16 @@ class CatalogPage extends ConsumerWidget {
       await ref.read(catalogProvider.notifier).delete(entry.id);
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+      showErrorPopup(context, error is FormatException ? error.message : 'Eliminazione fallita: $error');
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => Scaffold(
-    appBar: AppBar(title: const Text('Catalogo voci')),
+    appBar: AppBar(title: const Text('Catalogo voci'), actions: [
+      IconButton(tooltip: 'Importa CSV', icon: const Icon(Icons.file_upload_outlined),
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const CatalogImportPage()))),
+    ]),
     body: Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 880),

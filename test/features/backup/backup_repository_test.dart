@@ -81,6 +81,7 @@ void main() {
 
   test('esportazione e ripristino di clienti, preventivi e catalogo', () async {
     await populate();
+    await quotes.updateStatus((await quotes.getAll()).single.id, QuoteStatus.accepted);
     await SqliteBusinessRepository(database).save(const BusinessProfile(
       name: 'Officina',
       logo: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC',
@@ -106,6 +107,7 @@ void main() {
     expect(restoredQuote.lines.single.quantityMilli, 2000);
     expect(restoredQuote.conditions, 'Pagamento a 30 giorni');
     expect(restoredQuote.discountBasisPoints, 1250);
+    expect(restoredQuote.status, QuoteStatus.accepted);
     final profile = await SqliteBusinessRepository(database).load();
     expect(profile.logo, isNotEmpty);
     expect(profile.signature, profile.logo);
@@ -120,7 +122,7 @@ void main() {
     final decoded = jsonDecode(utf8.decode(await backup.exportBackup())) as Map<String, dynamic>;
     final tables = decoded['tables'] as Map<String, dynamic>;
     for (final row in tables['quotes'] as List<dynamic>) {
-      (row as Map<String, dynamic>)..remove('conditions')..remove('discount_basis_points');
+      (row as Map<String, dynamic>)..remove('conditions')..remove('discount_basis_points')..remove('status');
     }
     for (final row in tables['business_profile'] as List<dynamic>) {
       (row as Map<String, dynamic>)..remove('logo')..remove('signature');
@@ -129,6 +131,7 @@ void main() {
     final quote = (await quotes.getAll()).single;
     expect(quote.conditions, '');
     expect(quote.discountBasisPoints, 0);
+    expect(quote.status, QuoteStatus.pending);
     final profile = await SqliteBusinessRepository(database).load();
     expect(profile.logo, '');
     expect(profile.signature, '');
@@ -142,6 +145,16 @@ void main() {
     );
     expect(await customers.getAll(), hasLength(1));
     expect(await quotes.getAll(), hasLength(1));
+  });
+
+  test('stato sconosciuto nel backup viene rifiutato senza modificare i dati', () async {
+    await populate();
+    final decoded = jsonDecode(utf8.decode(await backup.exportBackup())) as Map<String, dynamic>;
+    final tables = decoded['tables'] as Map<String, dynamic>;
+    ((tables['quotes'] as List).single as Map<String, dynamic>)['status'] = 'unknown';
+    await expectLater(backup.restore(Uint8List.fromList(utf8.encode(jsonEncode(decoded)))),
+      throwsA(isA<FormatException>()));
+    expect((await quotes.getAll()).single.status, QuoteStatus.pending);
   });
 
   test('errore di riferimento durante ripristino annulla tutta la transazione', () async {

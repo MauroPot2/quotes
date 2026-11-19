@@ -21,7 +21,7 @@ class LocalDatabase {
     return _factory.openDatabase(
       location,
       options: OpenDatabaseOptions(
-        version: 3,
+        version: 4,
         onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
         onCreate: (db, version) async {
           await _createCustomers(db);
@@ -37,6 +37,7 @@ class LocalDatabase {
               notes TEXT NOT NULL,
               conditions TEXT NOT NULL DEFAULT '',
               discount_basis_points INTEGER NOT NULL DEFAULT 0 CHECK(discount_basis_points BETWEEN 0 AND 10000),
+              status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'accepted', 'rejected')),
               issue_date TEXT NOT NULL,
               validity_days INTEGER NOT NULL,
               created_at TEXT NOT NULL,
@@ -99,6 +100,9 @@ class LocalDatabase {
             await db.execute('ALTER TABLE quotes ADD COLUMN discount_basis_points INTEGER NOT NULL DEFAULT 0 CHECK(discount_basis_points BETWEEN 0 AND 10000)');
             await db.execute("ALTER TABLE business_profile ADD COLUMN logo TEXT NOT NULL DEFAULT ''");
             await db.execute("ALTER TABLE business_profile ADD COLUMN signature TEXT NOT NULL DEFAULT ''");
+          }
+          if (oldVersion < 4) {
+            await db.execute("ALTER TABLE quotes ADD COLUMN status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'accepted', 'rejected'))");
           }
         },
       ),

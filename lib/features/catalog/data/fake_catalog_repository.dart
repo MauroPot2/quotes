@@ -129,6 +129,21 @@ class FakeCatalogRepository implements CatalogRepository {
   }
 
   @override
+  Future<void> importEntries(List<CatalogEntry> entries, {bool replace = false}) async {
+    if (entries.isEmpty || entries.any((entry) => entry.id.isEmpty || entry.description.trim().isEmpty || entry.unit.trim().isEmpty || entry.priceCents < 0 || !const {0, 4, 10, 22}.contains(entry.vatRate))) {
+      throw const FormatException('Importazione senza voci valide.');
+    }
+    _ensureSeeded();
+    final ids = entries.map((entry) => entry.id).toSet();
+    if (ids.length != entries.length || (!replace && ids.any(_entries.containsKey))) {
+      throw const FormatException('Codici duplicati nel catalogo.');
+    }
+    if (replace) _entries.clear();
+    for (final entry in entries) { _entries[entry.id] = entry; }
+    _snapshot = null;
+  }
+
+  @override
   Future<void> delete(String id) async {
     _ensureSeeded();
     _entries.remove(id);
