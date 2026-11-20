@@ -137,6 +137,35 @@ void main() {
     expect(profile.signature, '');
   });
 
+  test('immagini grandi restano integre nel profilo e nel backup', () async {
+    final image = Uint8List(2 * 1024 * 1024);
+    image.setRange(0, 3, [0xff, 0xd8, 0xff]);
+    for (var i = 3; i < image.length; i++) {
+      image[i] = i % 251;
+    }
+    final logo = base64Encode(image);
+    final signature = base64Encode(image.sublist(0, 1024 * 1024));
+    final business = SqliteBusinessRepository(database);
+    await business.save(BusinessProfile(
+      name: 'Officina',
+      logo: logo,
+      signature: signature,
+    ));
+
+    var profile = await business.load();
+    expect(profile.logo, logo);
+    expect(profile.signature, signature);
+
+    final exported = await backup.exportBackup();
+    await business.save(const BusinessProfile(name: 'Modificata'));
+    await backup.restore(exported);
+
+    profile = await business.load();
+    expect(profile.name, 'Officina');
+    expect(profile.logo, logo);
+    expect(profile.signature, signature);
+  });
+
   test('file JSON non valido non modifica i dati locali', () async {
     await populate();
     await expectLater(

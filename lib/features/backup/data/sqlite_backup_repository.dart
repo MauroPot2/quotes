@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../../core/database/local_database.dart';
+import '../../business/data/business_profile_row.dart';
 import '../domain/backup_repository.dart';
 
 /// Backup logico di tutte le tabelle applicative.
@@ -67,7 +68,12 @@ class SqliteBackupRepository implements BackupRepository {
     final data = await db.transaction((txn) async {
       final rows = <String, List<Map<String, Object?>>>{};
       for (final table in _columns.keys) {
-        rows[table] = await txn.query(table);
+        if (table == 'business_profile') {
+          final profile = await readBusinessProfileRow(txn);
+          rows[table] = profile == null ? [] : [profile];
+        } else {
+          rows[table] = await txn.query(table);
+        }
       }
       return rows;
     });
